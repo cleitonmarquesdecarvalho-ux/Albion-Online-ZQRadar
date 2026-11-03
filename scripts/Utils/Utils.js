@@ -441,6 +441,13 @@ document.getElementById("button").addEventListener("click", function () {
 setDrawingViews();
 
 function setDrawingViews() {
+    // Move the equipment strip beside the map once; keep later user adjustments.
+    if (localStorage.getItem('drawingSideBySideV1') !== 'true') {
+        localStorage.setItem('itemsWindowMarginX', '520');
+        localStorage.setItem('itemsWindowMarginY', '0');
+        localStorage.setItem('buttonMarginX', '1040');
+        localStorage.setItem('drawingSideBySideV1', 'true');
+    }
     const mainWindowMarginXValue = localStorage.getItem("mainWindowMarginX");
     const mainWindowMarginYValue = localStorage.getItem("mainWindowMarginY");
     const itemsWindowMarginXValue = localStorage.getItem("itemsWindowMarginX");
