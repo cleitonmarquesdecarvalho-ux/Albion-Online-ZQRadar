@@ -74,5 +74,11 @@ The local repository was cloned from the archived upstream branch because no per
 - The cache starts empty when `app.js` restarts and can only contain players whose `NewCharacter` event was captured during that server session. Players already present before startup cannot be reconstructed until the client receives their spawn event.
 - Snapshot replay uses the same player parser and ignore-list filters, while suppressing duplicate hostile alerts.
 
+## Drawing player list overlay
+
+- Moved the detected-player panel onto the upper-left of the map canvas with a translucent background and bounded scroll area. This keeps identities/equipment visible without occupying a separate column.
+- The panel is an overlay only. It does not imply player coordinates or movement.
+- Protocol research found the live positions have an extra XOR layer, while the key-sync state needed to undo it is carried inside encrypted Photon traffic. Current public OpenRadar research reports no reliable passive cold-start source for that state; exact positions remain unavailable to this passive parser. References: https://github.com/Nouuu/Albion-Online-OpenRadar/blob/main/docs/technical/PLAYER_POSITIONS_MITM.md and https://github.com/Nouuu/Albion-Online-OpenRadar/issues/218.
+
 - Replaced the stale player item-ID catalog with the current catalog from OpenRadar's MIT-licensed item data at commit `2786827386ee31d37d5a6068b965f42d589fe946`; the old mapping mislabeled live IDs after game updates.
 - Equipment icons now retain their 10-slot positions, so empty offhand/bag/cape/etc. slots no longer shift the following item icons.

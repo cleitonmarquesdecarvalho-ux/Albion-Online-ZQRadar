@@ -63,20 +63,24 @@
 
         #playersPanel {
             position: absolute;
-            top: 90px;
-            left: 520px;
-            width: min(360px, calc(100vw - 540px));
-            max-height: 410px;
+            top: 12px;
+            left: 12px;
+            z-index: 10;
+            width: min(205px, calc(100vw - 44px));
+            max-height: min(330px, calc(100vh - 48px));
             overflow-y: auto;
-            padding: 10px;
-            border: 1px solid #555;
-            background: #1a1c23;
+            padding: 8px;
+            border: 1px solid rgba(150, 154, 165, .75);
+            border-radius: 6px;
+            background: rgba(20, 22, 28, .9);
+            box-shadow: 0 3px 14px rgba(0, 0, 0, .55);
+            backdrop-filter: blur(3px);
             color: #f3f4f6;
             font: 13px Arial, sans-serif;
         }
 
         .player-card {
-            padding: 8px 4px;
+            padding: 6px 3px;
             border-bottom: 1px solid #3a3d45;
         }
 
