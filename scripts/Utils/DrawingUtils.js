@@ -7,6 +7,7 @@
         this.fontFamily = "Arial";
         this.textColor = "white";
         this.images = [];
+        this.pendingDrawImages = new Set();
     }
 
     InitOurPlayerCanvas(ourPlayerCanvas, context)
@@ -87,10 +88,19 @@
         }
         else
         {
-            this.settings.preloadImageAndAddToList(src, folder)
-            .then(() => console.log('Item loaded'))
-            .catch(() => console.log('Item not loaded'));
+            this.loadImageOnce(src, folder);
         }
+    }
+
+    loadImageOnce(path, folder)
+    {
+        const key = `${folder}:${path}`;
+        if (this.pendingDrawImages.has(key)) return;
+        this.pendingDrawImages.add(key);
+        this.settings.preloadImageAndAddToList(path, folder).then(
+            () => this.pendingDrawImages.delete(key),
+            () => this.pendingDrawImages.delete(key)
+        );
     }
 
     transformPoint(x, y)

@@ -8,6 +8,7 @@ class Settings
         this.item_images = {}
         this.map_images = {}
         this.flag_images = {}
+        this.pending_images = new Map();
         //#endregion
 
         //#region Maps
@@ -190,118 +191,33 @@ class Settings
 
     preloadImageAndAddToList(path, container)
     {
-        return new Promise((resolve, reject) =>
-        {
-            switch (container)
-            {
-                case "Resources":
-                    if (this.images[path])
-                    {
-                        resolve();
-                    }
-                    else
-                    {
-                        const img = new Image();
+        const caches = {
+            Resources: this.images,
+            Maps: this.map_images,
+            Items: this.item_images,
+            Flags: this.flag_images,
+        };
+        const cache = caches[container];
+        if (!cache) return Promise.reject(new Error(`Unknown image cache: ${container}`));
 
-                        img.onload = () =>
-                        {
-                            this.images[path] = img;
-                            resolve();
-                        };
+        if (Object.prototype.hasOwnProperty.call(cache, path))
+            return cache[path] ? Promise.resolve(cache[path]) : Promise.reject(new Error(`Image unavailable: ${path}`));
 
-                        img.onerror = () => 
-                        {
-                            this.images[path] = null;
-                            reject();
-                        };
+        const key = `${container}:${path}`;
+        if (this.pending_images.has(key)) return this.pending_images.get(key);
 
-                        img.src = path;
-                    }
-
-                    break;
-
-                case "Maps":
-                    if (this.map_images[path])
-                    {
-                        resolve();
-                    }
-                    else
-                    {
-                        const img = new Image();
-
-                        img.onload = () =>
-                        {
-                            this.map_images[path] = img; 
-                            resolve();
-                        };
-
-                        img.onerror = () =>
-                        {
-                            this.map_images[path] = null;
-                            reject();
-                        };
-
-                        img.src = path;
-                    }
-
-                    break;
-
-                case "Items":
-                    if (this.item_images[path])
-                    {
-                        resolve();
-                    }
-                    else
-                    {
-                        const img = new Image();
-
-                        img.onload = () =>
-                        {
-                            this.item_images[path] = img; 
-                            resolve();
-                        };
-
-                        img.onerror = () =>
-                        {
-                            this.item_images[path] = null;
-                            reject();
-                        };
-
-                        img.src = path;
-                    }
-
-                    break;
-                
-                case "Flags":
-                    if (this.flag_images[path])
-                    {
-                        resolve();
-                    }
-                    else
-                    {
-                        const img = new Image();
-
-                        img.onload = () =>
-                        {
-                            this.flag_images[path] = img; 
-                            resolve();
-                        };
-
-                        img.onerror = () =>
-                        {
-                            this.flag_images[path] = null;
-                            reject();
-                        };
-
-                        img.src = path;
-                    }
-                    break;
-
-                default:
-                    reject();
-                    break;
-            }
+        const pending = new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => { cache[path] = image; resolve(image); };
+            image.onerror = () => { cache[path] = null; reject(new Error(`Image failed to load: ${path}`)); };
+            image.src = path;
         });
+        this.pending_images.set(key, pending);
+        pending.then(
+            () => this.pending_images.delete(key),
+            () => this.pending_images.delete(key)
+        );
+        return pending;
     }
 
     GetPreloadedImage(path, container)

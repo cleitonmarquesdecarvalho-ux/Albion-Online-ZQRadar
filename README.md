@@ -13,7 +13,7 @@
 Run PowerShell as Administrator for packet capture and native build setup. Use a path without spaces, for example `C:\dev\zqradar`.
 
 ```powershell
-git clone --branch old-radar-dev --single-branch https://github.com/Zeldruck/Albion-Online-ZQRadar.git C:\dev\zqradar
+git clone --branch old-radar-dev --single-branch https://github.com/cleitonmarquesdecarvalho-ux/Albion-Online-ZQRadar.git C:\dev\zqradar
 Set-Location C:\dev\zqradar
 npm install
 npm start
@@ -36,7 +36,7 @@ Set-ExecutionPolicy -Scope Process Bypass
 
 This source branch has no Discord OAuth/login implementation. The `/logout` route simply returns to the home page; there is no session middleware or auth configuration in this code. The README's Discord links are community links only.
 
-The capture filter remains UDP port 5056. The parser is the repository's local code in `scripts/classes/PhotonPacketParser.js`, `PhotonPacket.js`, `PhotonCommand.js`, and `Protocol16Deserializer.js`; the README's old credit to a separately installed `photon-packet-parser` package does not match this branch. Opcode/offset compatibility with the current game build has not been established. Do not treat old event IDs or offsets as verified. To update them, collect a packet capture from the current client/server session and compare decoded fields against the local parser's output before changing constants.
+The capture filter remains UDP port 5056. `scripts/classes/PhotonPacketParser.js` now decodes current Protocol18 traffic; live checks on this machine confirmed movement requests and resource/mob/player spawn events. Event handlers were updated only for fields supported by the live capture and the active Protocol18 reference. The player list on `/drawing` shows names, guild, alliance, faction, equipment and spells. Player locations are encrypted in passive movement traffic, so the app lists players without drawing misleading map dots. Map-background response handling is still awaiting a verified current JoinFinished/ChangeCluster response. Collect a current packet capture and compare decoded fields before changing other IDs or offsets.
 
 ## Build notes
 

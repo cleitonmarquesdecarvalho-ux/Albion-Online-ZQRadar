@@ -61,6 +61,28 @@
             left: 520px; /* Adjust the left position to be to the right of the canvases */
         }
 
+        #playersPanel {
+            position: absolute;
+            top: 90px;
+            left: 520px;
+            width: min(360px, calc(100vw - 540px));
+            max-height: 410px;
+            overflow-y: auto;
+            padding: 10px;
+            border: 1px solid #555;
+            background: #1a1c23;
+            color: #f3f4f6;
+            font: 13px Arial, sans-serif;
+        }
+
+        .player-card {
+            padding: 8px 4px;
+            border-bottom: 1px solid #3a3d45;
+        }
+
+        .player-name { font-weight: 700; }
+        .player-meta { margin-top: 3px; color: #b8bbc4; font-size: 12px; }
+
         #canvasContainer {
             position: relative;
         }
@@ -86,6 +108,11 @@
         <canvas id="thirdCanvas" width="500" height="500" ></canvas>
         <button id="button">Clear</button>
         <button id="logEnemiesList">Log Enemies List</button>
+        <section id="playersPanel" aria-live="polite">
+            <strong id="playersCount">Players detected (0)</strong>
+            <div class="player-meta">Posições cifradas não aparecem como pontos no mapa; jogadores detectados ficam listados aqui.</div>
+            <div id="playersList"><div class="player-meta">Aguardando eventos de jogadores…</div></div>
+        </section>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

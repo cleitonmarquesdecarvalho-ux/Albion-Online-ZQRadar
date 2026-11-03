@@ -141,7 +141,6 @@ function onEvent(Parameters)
         case EventCodes.Move:
             const posX = Parameters[4];
             const posY = Parameters[5];
-            playersHandler.updatePlayerPosition(id, posX, posY);
             mobsHandler.updateMistPosition(id, posX, posY);
             mobsHandler.updateMobPosition(id, posX, posY);
             trackFootprintsHandler.updateFootprintPosition(id, posX, posY);
@@ -272,7 +271,7 @@ function render() {
     fishingDrawing.Draw(context, fishingHandler.fishes);
     dungeonsDrawing.Draw(context, dungeonsHandler.dungeonList);
     playersDrawing.invalidate(context, playersHandler.playersInRange);
-    trackFootprintsDrawing.invalidate(context, trackFootprintsHandler.getFootprintsList());
+    trackFootprintsDrawing.invalidate(context, trackFootprintsHandler.footprintsList);
 }
 
 var previousTime = performance.now();
@@ -289,13 +288,17 @@ function update() {
 
     const currentTime = performance.now();
     const deltaTime = currentTime - previousTime;
-    const t = Math.min(1, deltaTime / 100);
+    const t = 1 - Math.exp(-Math.min(deltaTime, 100) / 70);
 
 
     if (settings.showMapBackground)
         mapsDrawing.interpolate(map, lpX, lpY, t);
 
-    harvestablesHandler.removeNotInRange(lpX, lpY);
+    if (currentTime - lastHarvestablePrune >= 250)
+    {
+        harvestablesHandler.removeNotInRange(lpX, lpY);
+        lastHarvestablePrune = currentTime;
+    }
     harvestablesDrawing.interpolate(harvestablesHandler.harvestableList, lpX, lpY, t);
 
 
@@ -307,9 +310,58 @@ function update() {
     fishingDrawing.Interpolate(fishingHandler.fishes, lpX, lpY, t);
     dungeonsDrawing.interpolate(dungeonsHandler.dungeonList, lpX, lpY, t);
     playersDrawing.interpolate(playersHandler.playersInRange, lpX, lpY, t);
-    trackFootprintsDrawing.interpolate(trackFootprintsHandler.getFootprintsList(), lpX, lpY, t);
+    trackFootprintsDrawing.interpolate(trackFootprintsHandler.footprintsList, lpX, lpY, t);
 
     previousTime = currentTime;
+}
+
+let lastHarvestablePrune = 0;
+
+function renderPlayerList() {
+    const panel = document.getElementById('playersPanel');
+    const list = document.getElementById('playersList');
+    const count = document.getElementById('playersCount');
+    if (!settings.settingDot) {
+        panel.hidden = true;
+        return;
+    }
+    panel.hidden = false;
+    const players = playersHandler.playersInRange;
+    count.textContent = `Players detected (${players.length})`;
+    list.replaceChildren();
+
+    if (players.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'player-meta';
+        empty.textContent = 'Nenhum jogador detectado nesta zona.';
+        list.appendChild(empty);
+        return;
+    }
+
+    const fragment = document.createDocumentFragment();
+    for (const player of players) {
+        const card = document.createElement('div');
+        card.className = 'player-card';
+
+        const name = document.createElement('div');
+        name.className = 'player-name';
+        name.textContent = player.nickname;
+
+        const faction = player.faction === 255 ? 'Hostil'
+            : player.faction === 0 ? 'Passivo'
+                : `Facção ${player.faction}`;
+        const meta = document.createElement('div');
+        meta.className = 'player-meta';
+        meta.textContent = [player.guildName, player.allianceName, faction].filter(Boolean).join(' · ');
+
+        const gear = document.createElement('div');
+        gear.className = 'player-meta';
+        gear.textContent = `Equipamentos: ${player.items.length} · Habilidades: ${player.spells.length}`;
+
+        card.append(name, meta, gear);
+        fragment.appendChild(card);
+    }
+    list.appendChild(fragment);
 }
 
 function drawItems() {
@@ -320,19 +372,19 @@ function drawItems() {
     {
         playersDrawing.drawItems(contextItems, canvasItems, playersHandler.playersInRange, settings.settingItemsDev);
     }
-
+    renderPlayerList();
 }
 const intervalItems = 500;
 setInterval(drawItems, intervalItems);
 
-function checkLocalStorage()
+function refreshSettings()
 {
     settings.update(settings);
     setDrawingViews();
 }
 
-const interval = 300;
-setInterval(checkLocalStorage, interval)
+window.addEventListener('storage', refreshSettings);
+window.addEventListener('focus', refreshSettings);
 
 
 

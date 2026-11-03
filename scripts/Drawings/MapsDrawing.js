@@ -56,9 +56,7 @@ export class MapDrawing extends DrawingUtils
         }
         else
         {
-            this.settings.preloadImageAndAddToList(src, "Maps")
-            .then(() => console.log('Map loaded'))
-            .catch(() => console.log('Map not loaded'));
+            this.loadImageOnce(src, "Maps");
         }
     }
 }
