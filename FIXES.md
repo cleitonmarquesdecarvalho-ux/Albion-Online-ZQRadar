@@ -66,3 +66,6 @@ The local repository was cloned from the archived upstream branch because no per
 - The Drawing player panel now shows the verified faction label, equipment/ability counts, health when received, and mount state when received.
 - New hostile-player detections produce a temporary visible alert. The existing Players -> Sound option now plays the bundled `sounds/player.mp3` for a newly detected hostile.
 - Exact player dots and distance are still unavailable from this passive capture path; this change does not estimate coordinates.
+
+- Replaced the stale player item-ID catalog with the current catalog from OpenRadar's MIT-licensed item data at commit `2786827386ee31d37d5a6068b965f42d589fe946`; the old mapping mislabeled live IDs after game updates.
+- Equipment icons now retain their 10-slot positions, so empty offhand/bag/cape/etc. slots no longer shift the following item icons.

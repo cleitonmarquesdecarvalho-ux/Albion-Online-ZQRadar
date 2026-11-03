@@ -14,17 +14,24 @@ export class PlayersDrawing extends DrawingUtils {
 
         const slotSize = 36;
         const gap = 8;
-        const columns = Math.floor((canvas.width - 16) / (slotSize + gap));
+        const slotsPerRow = 10;
         let y = 16;
         for (const player of players) {
             if (y + 64 > canvas.height) break;
             this.drawTextItems(8, y + 12, player.nickname, context, '13px', 'white');
 
-            const equipped = (player.items || []).filter((itemId) => Number(itemId) > 0);
-            equipped.forEach((itemId, index) => {
-                const column = index % columns;
-                const row = Math.floor(index / columns);
+            const equipment = Array.isArray(player.items) ? player.items : [];
+            equipment.forEach((itemId, index) => {
+                const column = index % slotsPerRow;
+                const row = Math.floor(index / slotsPerRow);
                 const x = 8 + column * (slotSize + gap);
+                const iconY = y + 20 + row * 43;
+                context.fillStyle = '#1a1c23';
+                context.fillRect(x, iconY, slotSize, slotSize);
+                context.strokeStyle = '#4a4d55';
+                context.strokeRect(x, iconY, slotSize, slotSize);
+                if (!(Number(itemId) > 0)) return;
+
                 const imageName = this.itemsInfo[itemId];
                 const baseName = typeof imageName === 'string' ? imageName.split('@')[0] : '_default';
                 const safeName = /^[A-Za-z0-9_]+$/.test(baseName) ? baseName : '_default';
@@ -47,7 +54,6 @@ export class PlayersDrawing extends DrawingUtils {
                     if (image === undefined) this.loadImageOnce(fallbackPath, 'Items');
                 }
 
-                const iconY = y + 20 + row * 43;
                 if (image) context.drawImage(image, x, iconY, slotSize, slotSize);
                 if (devMode && imageName)
                     this.drawTextItems(x, iconY + slotSize + 8, String(itemId), context, '9px', '#aaa');
@@ -60,7 +66,7 @@ export class PlayersDrawing extends DrawingUtils {
                 }
             });
 
-            const slotRows = Math.max(1, Math.ceil(equipped.length / columns));
+            const slotRows = Math.max(1, Math.ceil(equipment.length / slotsPerRow));
             y += 24 + slotRows * 43;
             if (Number.isFinite(player.currentHealth) && Number.isFinite(player.initialHealth)) {
                 this.drawTextItems(8, y, `${player.currentHealth}/${player.initialHealth}`, context, '11px', '#ff7777');

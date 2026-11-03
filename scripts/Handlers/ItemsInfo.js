@@ -36,7 +36,7 @@ class ItemsInfo{
 
     async initItems()
     {
-        const response = await fetch('/scripts/Handlers/items.txt');
+        const response = await fetch('/scripts/Handlers/items.txt', { cache: 'no-cache' });
 
         if (!response.ok)
             throw new Error(`HTTP error! status: ${response.status}`);
