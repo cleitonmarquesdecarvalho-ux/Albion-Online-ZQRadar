@@ -179,13 +179,17 @@ class HarvestablesHandler
     {
         const a0 = Parameters[0];
 
-        if (a0.length === 0) return;
+        if (!Array.isArray(a0) || a0.length === 0) return;
 
-        const a1 = Parameters[1]["data"];
-        const a2 = Parameters[2]["data"];
+        // Protocol18 custom byte arrays are plain arrays in our JS parser;
+        // retain support for the Buffer-shaped values from older captures.
+        const bytes = (value) => Array.isArray(value) ? value : value?.data;
+        const a1 = bytes(Parameters[1]);
+        const a2 = bytes(Parameters[2]);
  
         const a3 = Parameters[3];
-        const a4 = Parameters[4]["data"];
+        const a4 = bytes(Parameters[4]);
+        if (![a1, a2, a3, a4].every(Array.isArray)) return;
 
         for (let i = 0; i < a0.length; i++) {
             const id = a0[i];

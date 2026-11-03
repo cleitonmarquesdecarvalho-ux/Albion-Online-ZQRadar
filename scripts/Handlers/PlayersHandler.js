@@ -92,12 +92,12 @@ export class PlayersHandler {
         if (!this.settings.settingDot)
             return;
 
-        if (this.alreadyIgnoredPlayers.find(name => name === nickname.toUpperCase()))
+        const nickname = Parameters[1];
+        if (typeof nickname !== 'string' || nickname.length === 0)
             return;
 
-        /* General */
-        const id = Parameters[0];
-        const nickname = Parameters[1];
+        if (this.alreadyIgnoredPlayers.find(name => name === nickname.toUpperCase()))
+            return;
 
         if (this.ignorePlayers.find(name => name === nickname.toUpperCase()))
         {
@@ -105,7 +105,7 @@ export class PlayersHandler {
             return;
         }
 
-        const guildName = String(Parameters[8]); 
+        const guildName = String(Parameters[8] ?? '');
 
         if (this.ignoreGuilds.find(name => name === guildName.toUpperCase()))
         {
@@ -113,7 +113,7 @@ export class PlayersHandler {
             return;
         }
 
-        const alliance = String(Parameters[49]);
+        const alliance = String(Parameters[51] ?? '');
 
         if (this.ignoreAlliances.find(name => name === alliance.toUpperCase()))
         {
@@ -121,20 +121,9 @@ export class PlayersHandler {
             return;
         }
 
-        /* Position */
-        var positionArray = Parameters[14];
-        const posX = positionArray[0];
-        const posY = positionArray[1];
-
-        /* Health */
-        const currentHealth = Parameters[20];
-        const initialHealth = Parameters[21];
-
-        /* Items & flag */
-        const items = Parameters[38];
-        const flagId = Parameters[51];
-
-        this.addPlayer(posX, posY, id, nickname, guildName, currentHealth, initialHealth, items, this.settings.settingSound, flagId);
+        // The current NewCharacter capture does not contain a verified
+        // plaintext position. Player Move positions are encrypted, so a
+        // passive radar cannot place this player accurately.
     }
 
     handleMountedPlayerEvent(id, parameters)

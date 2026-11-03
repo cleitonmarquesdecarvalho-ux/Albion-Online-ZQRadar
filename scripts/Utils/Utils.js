@@ -220,28 +220,38 @@ function onEvent(Parameters)
 
 function onRequest(Parameters)
 { 
-    // Player moving
-    if (Parameters[253] == 21)
+    // Live Protocol18 captures show operation 22 carrying the current
+    // position as a two-float array at parameter 1.
+    if (Parameters[253] == 22)
     {
-        lpX = Parameters[1][0];
-        lpY = Parameters[1][1];
-
-        //console.log("X: " + lpX + ", Y: " + lpY);
-    }    
+        const position = Parameters[1];
+        if (Array.isArray(position) && Number.isFinite(position[0]) && Number.isFinite(position[1]))
+        {
+            lpX = position[0];
+            lpY = position[1];
+        }
+    }
 };
 
 function onResponse(Parameters)
 {
     // Player join new map
-    if (Parameters[253] == 35)
+    if (Parameters[253] == 41)
     {
-        map.id = Parameters[0];
+        if (Parameters[0] !== undefined && Parameters[0] !== null)
+            map.id = String(Parameters[0]);
     }
     // All data on the player joining the map (us)
     else if (Parameters[253] == 2)
     {
-        lpX = Parameters[9][0];
-        lpY = Parameters[9][1];
+        if (Parameters[8] !== undefined && Parameters[8] !== null)
+            map.id = String(Parameters[8]);
+        const position = Parameters[9];
+        if (Array.isArray(position) && Number.isFinite(position[0]) && Number.isFinite(position[1]))
+        {
+            lpX = position[0];
+            lpY = position[1];
+        }
     }
 };
 

@@ -103,27 +103,15 @@ class MobsHandler
             exp = 0;
         }
 
-        let name = null;
-        try
-        {
-            name = parameters[32];
-        }
-        catch (error)
-        {
-            try
-            {
-                name = parameters[31];
-            }
-            catch (error2)
-            {
-                name = null;
-            }
-        }
+        // Current Protocol18 NewMob layout: [31] is the server name
+        // (Mists creatures use a MISTS_ prefix), while [33] is the portal tag.
+        const serverName = typeof parameters[31] === 'string' ? parameters[31] : null;
+        const isMist = serverName !== null && serverName.startsWith('MISTS_');
 
         let enchant = 0;
         try
         {
-            enchant = parameters[33];
+            enchant = parameters[34];
         }
         catch (error)
         {
@@ -140,9 +128,9 @@ class MobsHandler
             rarity = 1;
         }
 
-        if (name != null)
+        if (isMist)
         {
-            this.AddMist(id, posX, posY, name, enchant);
+            this.AddMist(id, posX, posY, serverName, enchant);
         }
         else
         {
