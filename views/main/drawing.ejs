@@ -82,6 +82,19 @@
 
         .player-name { font-weight: 700; }
         .player-meta { margin-top: 3px; color: #b8bbc4; font-size: 12px; }
+        .player-hostile { border-left: 3px solid #ff5555; padding-left: 8px; }
+        .faction-hostile { color: #ff7777; font-weight: 700; }
+        .player-alert {
+            margin: 8px 0;
+            padding: 8px;
+            border: 1px solid #ff5555;
+            border-radius: 4px;
+            background: #4a1d24;
+            color: #fff;
+            font-weight: 700;
+            animation: alert-pulse 1s ease-in-out 3;
+        }
+        @keyframes alert-pulse { 50% { background: #8d202d; } }
 
         #canvasContainer {
             position: relative;
@@ -110,7 +123,8 @@
         <button id="logEnemiesList">Log Enemies List</button>
         <section id="playersPanel" aria-live="polite">
             <strong id="playersCount">Players detected (0)</strong>
-            <div class="player-meta">Posições cifradas não aparecem como pontos no mapa; jogadores detectados ficam listados aqui.</div>
+            <div class="player-meta">Jogadores detectados, equipamento, vida e montaria.</div>
+            <div id="playerAlert" class="player-alert" role="status" hidden></div>
             <div id="playersList"><div class="player-meta">Aguardando eventos de jogadores…</div></div>
         </section>
     </div>

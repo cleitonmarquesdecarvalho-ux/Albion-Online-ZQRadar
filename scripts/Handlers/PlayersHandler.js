@@ -10,7 +10,7 @@ class Player {
         this.spells = Array.isArray(spells) ? spells : [];
         this.currentHealth = null;
         this.initialHealth = null;
-        this.mounted = false;
+        this.mounted = null;
         this.detectedAt = Date.now();
     }
 }
@@ -59,11 +59,12 @@ export class PlayersHandler {
 
         const playerId = String(id);
         let player = this.playersInRange.find((entry) => entry.id === playerId);
+        const isNew = !player;
         if (!player) {
             if (this.playersInRange.length >= this.maxTrackedPlayers) this.playersInRange.shift();
             player = new Player(playerId, nickname, guildName, allianceName, faction, items, spells);
             this.playersInRange.push(player);
-            return;
+            return { player, isNew };
         }
 
         player.nickname = nickname;
@@ -74,6 +75,7 @@ export class PlayersHandler {
         if (items.length) player.items = items;
         if (spells.length) player.spells = spells;
         player.detectedAt = Date.now();
+        return { player, isNew };
     }
 
     handleMountedPlayerEvent(id, parameters) {
@@ -83,7 +85,9 @@ export class PlayersHandler {
 
     updatePlayerMounted(id, mounted) {
         const player = this.playersInRange.find((entry) => entry.id === String(id));
-        if (player) player.mounted = Boolean(mounted);
+        if (player) {
+            player.mounted = Boolean(mounted);
+        }
     }
 
     updateItems(id, parameters) {

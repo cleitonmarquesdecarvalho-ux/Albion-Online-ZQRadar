@@ -60,3 +60,9 @@ The local repository was cloned from the archived upstream branch because no per
 - Fixed the startup race: player equipment now receives the item-ID catalog after `items.txt` finishes loading.
 - Player gear drawing now uses local WebP assets and supports PNG assets for item IDs absent from the WebP pack. Two missing furniture icons were added from the Albion item renderer (`render.albiononline.com`).
 - This removes the blue missing-image circles for the shown equipment. Unmapped or newly added game items can still require updated `items.txt` mappings and an icon asset.
+
+## Player awareness panel
+
+- The Drawing player panel now shows the verified faction label, equipment/ability counts, health when received, and mount state when received.
+- New hostile-player detections produce a temporary visible alert. The existing Players -> Sound option now plays the bundled `sounds/player.mp3` for a newly detected hostile.
+- Exact player dots and distance are still unavailable from this passive capture path; this change does not estimate coordinates.

@@ -68,6 +68,7 @@ const playersDrawing = new PlayersDrawing(settings);
 const dungeonsDrawing = new DungeonsDrawing(settings);
 const trackFootprintsHandler = new TrackFootprintsHandler(settings);
 const trackFootprintsDrawing = new TrackFootprintsDrawing(settings);
+let playerAlert = null;
 playersDrawing.updateItemsInfo(itemsInfo.iteminfo);
 itemsInfoPromise
     .then(() => playersDrawing.updateItemsInfo(itemsInfo.iteminfo))
@@ -150,7 +151,14 @@ function onEvent(Parameters)
             break;
 
         case EventCodes.NewPlayer:
-            playersHandler.handleNewPlayerEvent(Parameters);
+            const detection = playersHandler.handleNewPlayerEvent(Parameters);
+            if (detection?.isNew && detection.player.faction === 255) {
+                playerAlert = { nickname: detection.player.nickname, expiresAt: Date.now() + 7000 };
+                if (settings.settingSound) {
+                    const alertAudio = new Audio('/sounds/player.mp3');
+                    alertAudio.play().catch(() => {});
+                }
+            }
             break;
 
         case EventCodes.NewSimpleHarvestableObjectList:
@@ -324,11 +332,20 @@ function renderPlayerList() {
     const panel = document.getElementById('playersPanel');
     const list = document.getElementById('playersList');
     const count = document.getElementById('playersCount');
+    const alert = document.getElementById('playerAlert');
     if (!settings.settingDot) {
         panel.hidden = true;
         return;
     }
     panel.hidden = false;
+    if (playerAlert && playerAlert.expiresAt > Date.now()) {
+        alert.hidden = false;
+        alert.textContent = `Hostil detectado: ${playerAlert.nickname}`;
+    } else {
+        playerAlert = null;
+        alert.hidden = true;
+        alert.textContent = '';
+    }
     const players = playersHandler.playersInRange;
     count.textContent = `Players detected (${players.length})`;
     list.replaceChildren();
@@ -350,18 +367,29 @@ function renderPlayerList() {
         name.className = 'player-name';
         name.textContent = player.nickname;
 
-        const faction = player.faction === 255 ? 'Hostil'
-            : player.faction === 0 ? 'Passivo'
-                : `Facção ${player.faction}`;
+        const factionNames = {
+            0: 'Passivo', 1: 'Martlock', 2: 'Lymhurst', 3: 'Bridgewatch',
+            4: 'Fort Sterling', 5: 'Thetford', 6: 'Caerleon', 255: 'Hostil',
+        };
+        const faction = factionNames[player.faction] || `Facção ${player.faction}`;
         const meta = document.createElement('div');
-        meta.className = 'player-meta';
+        meta.className = `player-meta faction-${player.faction === 255 ? 'hostile' : 'other'}`;
         meta.textContent = [player.guildName, player.allianceName, faction].filter(Boolean).join(' · ');
 
         const gear = document.createElement('div');
         gear.className = 'player-meta';
         gear.textContent = `Equipamentos: ${player.items.length} · Habilidades: ${player.spells.length}`;
 
-        card.append(name, meta, gear);
+        const state = document.createElement('div');
+        state.className = 'player-meta';
+        const stateParts = [];
+        if (player.currentHealth !== null && player.initialHealth !== null)
+            stateParts.push(`Vida ${player.currentHealth}/${player.initialHealth}`);
+        stateParts.push(player.mounted === null ? 'Montaria não informada' : player.mounted ? 'Montado' : 'A pé');
+        state.textContent = stateParts.join(' · ');
+
+        if (player.faction === 255) card.classList.add('player-hostile');
+        card.append(name, meta, gear, state);
         fragment.appendChild(card);
     }
     list.appendChild(fragment);
