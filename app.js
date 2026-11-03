@@ -1,15 +1,20 @@
 ﻿
 const express = require('express');
-const ejs = require('ejs');
-const path = require('path');
+const logger = require('./scripts/logger');
 const PhotonParser = require('./scripts/classes/PhotonPacketParser');
-var Cap = require('cap').Cap;
-var decoders = require('cap').decoders;
+let Cap;
+let decoders;
+try {
+  ({ Cap, decoders } = require('cap'));
+} catch (error) {
+  logger.error(`O módulo nativo cap não carregou. Confirme Npcap e execute npm rebuild cap. Detalhe: ${error.message}`, error);
+  process.exit(1);
+}
 const WebSocket = require('ws');
 
 const fs = require("fs");
 
-const { getAdapterIp } = require('./server-scripts/adapter-selector')
+const { getAdapterIp } = require('./server-scripts/adapter-selector');
 
 
 
@@ -83,8 +88,6 @@ app.get('/drawing', (req, res) => {
 });
 
 app.get('/logout', (req, res) => {
-
-  req.session.destroy();
   res.redirect('/');
 });
 
@@ -104,103 +107,83 @@ app.use('/config', express.static(__dirname + '/config'));
 
 
 const port = 5001;
+const host = '127.0.0.1';
 
+async function start() {
+  const interfaces = Cap.deviceList();
+  if (!interfaces.length) throw new Error('Npcap não encontrou adaptadores. Confirme que o serviço Npcap está instalado e em execução.');
 
-app.listen(port, () => {
-  console.log(`Server is running on http://localhost:${port}`);
-});
-
-
-var c = new Cap();
-
-let adapterIp;
-
-if (fs.existsSync('ip.txt'))
-  adapterIp = fs.readFileSync('ip.txt', { encoding: 'utf-8', flag: 'r' })
-  
-
-if (!adapterIp)
-{
-  adapterIp = getAdapterIp()
-}
-else
-{
-  console.log();
-  console.log(`Using last adapter selected - ${adapterIp}`);
-  console.log('If you want to change adapter, delete the  "ip.txt"  file.');
-  console.log();
-}
-
-let device = Cap.findDevice(adapterIp);
-
-if (device == undefined)
-{
-  console.log();
-  console.log(`Last adapter is not working, please choose a new one.`);
-  console.log();
-
-  adapterIp = getAdapterIp();
-  device = Cap.findDevice(adapterIp);
-}
-
-const filter = 'udp and (dst port 5056 or src port 5056)';
-var bufSize =  4096;
-var buffer = Buffer.alloc(4096);
-const manager = new PhotonParser();
-var linkType = c.open(device, filter, bufSize, buffer);
-
-c.setMinBytes && c.setMinBytes(0);
-
-
-// setup Cap event listener on global level
-c.on('packet', function (nbytes, trunc) {
-  let ret = decoders.Ethernet(buffer);
-  ret = decoders.IPV4(buffer, ret.offset);
-  ret = decoders.UDP(buffer, ret.offset);
-
-  let payload = buffer.slice(ret.offset, nbytes);
-
-  // Parse the UDP payload
-  try {
-    manager.handle(payload);
+  const manager = new PhotonParser();
+  const savedIp = fs.existsSync('ip.txt') ? fs.readFileSync('ip.txt', 'utf8').trim() : '';
+  let adapterIp = savedIp;
+  let device = adapterIp ? Cap.findDevice(adapterIp) : undefined;
+  if (!device) {
+    if (savedIp) logger.warn(`Adaptador salvo ${savedIp} não está disponível; selecione outro.`);
+    adapterIp = await getAdapterIp();
+    device = Cap.findDevice(adapterIp);
   }
-  catch { }
-});
+  if (!device) throw new Error(`Npcap não reconhece o adaptador ${adapterIp}. Escolha um adaptador de rede ativo.`);
+  fs.writeFileSync('ip.txt', adapterIp, 'utf8');
 
-const server = new WebSocket.Server({ port: 5002, host: 'localhost'});
-server.on('listening', () => {
-  console.log("openned");
+  const capture = new Cap();
+  const buffer = Buffer.alloc(4096);
+  try {
+    capture.open(device, 'udp and (dst port 5056 or src port 5056)', buffer.length, buffer);
+  } catch (error) {
+    throw new Error(`Npcap não conseguiu abrir o adaptador ${adapterIp}. Execute PowerShell como Administrador e confirme que Npcap está ativo. Detalhe: ${error.message}`);
+  }
+  let lastPacketWarning = 0;
+  capture.on('packet', (nbytes) => {
+    try {
+      let decoded = decoders.Ethernet(buffer);
+      if (decoded.info.type !== decoders.PROTOCOL.ETHERNET.IPV4) return;
+      decoded = decoders.IPV4(buffer, decoded.offset);
+      if (decoded.info.protocol !== decoders.PROTOCOL.IP.UDP) return;
+      decoded = decoders.UDP(buffer, decoded.offset);
+      manager.handle(buffer.slice(decoded.offset, nbytes));
+    } catch (error) {
+      const now = Date.now();
+      if (now - lastPacketWarning >= 5000) {
+        logger.warn(`Falha ao decodificar pacote (avisos limitados a um por 5 segundos): ${error.message}`);
+        lastPacketWarning = now;
+      }
+    }
+  });
 
-  manager.on('event', (dictonary) =>
-  {
-    const dictionaryDataJSON = JSON.stringify(dictonary);
-    server.clients.forEach(function(client) {
-      client.send(JSON.stringify({ code : "event", dictionary: dictionaryDataJSON }))
+  const httpServer = app.listen(port, host);
+  await new Promise((resolve, reject) => {
+    httpServer.once('listening', resolve);
+    httpServer.once('error', reject);
+  }).catch((error) => {
+    capture.close();
+    if (error.code === 'EADDRINUSE') throw new Error(`A porta ${port} já está ocupada. Feche o processo que a utiliza ou libere a porta.`);
+    throw error;
+  });
+  logger.info(`Interface web disponível em http://${host}:${port}; adaptador ${adapterIp}`);
+
+  const wsServer = new WebSocket.Server({ port: 5002, host });
+  wsServer.on('error', (error) => {
+    const message = error.code === 'EADDRINUSE'
+      ? 'A porta 5002 do WebSocket já está ocupada. Feche o processo que a utiliza ou libere a porta.'
+      : 'Falha ao iniciar o servidor WebSocket local.';
+    logger.error(message, error);
+    capture.close();
+    httpServer.close();
+    process.exitCode = 1;
+  });
+  for (const eventName of ['event', 'request', 'response']) {
+    manager.on(eventName, (dictionary) => {
+      const message = JSON.stringify({ code: eventName, dictionary: JSON.stringify(dictionary) });
+      wsServer.clients.forEach((client) => { if (client.readyState === WebSocket.OPEN) client.send(message); });
     });
-  });
+  }
+  logger.info('Captura Npcap e WebSocket local iniciados.');
+}
 
-  
-  manager.on('request', (dictonary) =>
-  {
-    const dictionaryDataJSON = JSON.stringify(dictonary);
-    server.clients.forEach(function(client) {
-      client.send(JSON.stringify({ code : "request", dictionary: dictionaryDataJSON }))
-   });
-  });
-
-  manager.on('response', (dictonary) =>
-  {
-    const dictionaryDataJSON = JSON.stringify(dictonary);
-    server.clients.forEach(function(client) {
-      client.send(JSON.stringify({ code : "response", dictionary: dictionaryDataJSON }))
-   });
-  });
+start().catch((error) => {
+  logger.error(error.message, error);
+  process.exitCode = 1;
 });
-
-server.on('close', () => {
-  console.log('closed')
-  manager.removeAllListeners()
-})
 
 
 

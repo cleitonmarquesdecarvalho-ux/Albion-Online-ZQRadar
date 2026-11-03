@@ -1,63 +1,28 @@
-const { networkInterfaces } = require('os')
-const readlineSync = require('readline-sync');
-const fs = require('node:fs');
+const os = require('node:os');
+const readline = require('node:readline/promises');
+const { stdin, stdout } = require('node:process');
 
-const getAdapterIp = () => {
-    const interfaces = networkInterfaces();
+async function getAdapterIp() {
+  const candidates = Object.entries(os.networkInterfaces()).flatMap(([name, entries]) =>
+    (entries || [])
+      .filter((entry) => entry.family === 'IPv4' && !entry.internal && entry.address !== '127.0.0.1')
+      .map((entry) => ({ name, address: entry.address }))
+  );
+  if (!candidates.length) throw new Error('Nenhum adaptador IPv4 ativo foi encontrado. Verifique a conexão de rede.');
 
-    console.log();
-    console.log('Please select one of the adapter that you use to connect to the internet:');
-
-    let i = 1;
-    const selection = {};
-    const selectionName = {};
-    for (const [name, value] of Object.entries(interfaces)) {
-        const detail = value.find(v => v.family === 'IPv4');
-        if (!detail) continue;
-        selection[i] = detail.address;
-        selectionName[i] = name;
-        console.log(`  ${i}. ${name}\t ip address: ${detail.address}`);
-        i++;
+  const rl = readline.createInterface({ input: stdin, output: stdout });
+  try {
+    while (true) {
+      console.log('Selecione o adaptador usado pela conexão do jogo:');
+      candidates.forEach((item, index) => console.log(`  ${index + 1}. ${item.name} — ${item.address}`));
+      const answer = (await rl.question('Número do adaptador: ')).trim();
+      const index = Number(answer) - 1;
+      if (Number.isInteger(index) && index >= 0 && index < candidates.length) return candidates[index].address;
+      console.log('Seleção inválida. Digite um dos números listados.\n');
     }
-
-    let selectedIp;
-    let selectedName;
-
-    while (true)
-    {
-        console.log();
-        let userSelect = readlineSync.question('input the number here: ');
-        selectedIp = selection[userSelect];
-        selectedName = selectionName[userSelect];
-
-        if (selectedIp)
-            break;
-
-        console.clear();
-        console.log('Invalid input, try again');
-        console.log();
-
-        console.log();
-        console.log('Please select one of the adapter that you use to connect to the internet:');
-        
-        for (let j = 1; j < i; j++)
-        {
-            console.log(`  ${j}. ${selectionName[j]}\t ip address: ${selection[j]}`);
-        }
-    }
-
-    console.log();
-    console.log(`You have selected "${selectedName} - ${selectedIp}"`);
-    console.log();
-
-    fs.writeFile('ip.txt', selectedIp, (err) => {
-        if (err)
-            console.log("Error when saving ip.")
-    });
-
-    return selectedIp;
+  } finally {
+    rl.close();
+  }
 }
 
-module.exports = {
-    getAdapterIp,
-}
+module.exports = { getAdapterIp };

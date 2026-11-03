@@ -1,111 +1,47 @@
-[![Discord](https://img.shields.io/discord/1191823969167352039?style=for-the-badge&logo=discord&label=Discord)](https://discord.gg/XAWjmzeaD3)
-[![GitHub last commit (branch)](https://img.shields.io/github/last-commit/Zeldruck/Albion-Online-ZQRadar/main?style=for-the-badge&label=Last%20Commit)]()
-[![GitHub issues](https://img.shields.io/github/issues-raw/Zeldruck/Albion-Online-ZQRadar?style=for-the-badge&label=Issue)](https://github.com/Zeldruck/Albion-Online-ZQRadar/issues)
-[![GitHub Repo stars](https://img.shields.io/github/stars/Zeldruck/Albion-Online-ZQRadar?style=for-the-badge)]()
+# Albion Online ZQRadar (Windows)
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/F1F1VMA9G)
+## Requirements
 
-## ❓ What is ZQRadar?
+- Windows 11 x64
+- Node.js 26 LTS (`.nvmrc`), npm included
+- Python 3.15 (`.python-version`; used by node-gyp only)
+- Npcap with WinPcap API-compatible mode enabled; raw 802.11 support is not needed
+- Visual Studio Build Tools 2022 with Desktop development with C++, MSVC v143, Windows SDK, and ClangCL (required by the Node 26 addon build configuration)
 
-ZQRadar is a radar type tool for the game Albion Online.
-\
-Albion ZQRadar provides a real-time map, helping players detect other players, creatures, resources and more, nearby.
+## Install and run from source
 
-## 🎯 Features
+Run PowerShell as Administrator for packet capture and native build setup. Use a path without spaces, for example `C:\dev\zqradar`.
 
-- No injections, less risk of banning
-- Display a lot of information about other players (health, items, mounted or not, ...)
-- Display customizable resources (select tiers and enchantments for each)
-- Display customizable living resources (select tiers and enchantments for each)
-- Display customizable enemies
-- Display mist beasts
-- Display chests (types)
-- Display mist portals (solo/duo, enchantments)
-- Display dungeons (solo/duo, enchantments)
-- Display background map on radar
-
-And much more to come!
-\
-Join the [Discord](https://discord.gg/XAWjmzeaD3) to look at the to-do list and be informed when a new version is released.
-
-## 🔰 How to run (Windows)
-
-1. Download Node.js v18.18.2:
-- [Node.js v18.18.2 (64-bit)](https://nodejs.org/dist/v18.18.2/node-v18.18.2-x64.msi)
-2. Download Npcap:
-- [Npcap 1.72](https://npcap.com/dist/npcap-1.72.exe)
-3. Download the the latest release
-- [Releases](https://github.com/Zeldruck/Albion-Online-ZQRadar/releases)
-7. Open the file `_RUN.bat` and wait for the line:
-```
-Please select one of the adapter that you use to connect to the internet:
-  1. ******
-  2. ******
-  3. ******
-
-input the number here:
-```
-8. Choose the right adapter and enter the number. 
-9. You can now access the radar features by going to `http://localhost:5001` in your browser.
-
-## 👨‍💻 For the devs (Windows)
-
-1. Download Node.js v18.18.2:
-- [Node.js v18.18.2 (64-bit)](https://nodejs.org/dist/v18.18.2/node-v18.18.2-x64.msi)
-2. Download Npcap:
-- [Npcap 1.72](https://npcap.com/dist/npcap-1.72.exe)
-3. Download Python 3.10.2:
-- [Python 3.10.2 (64-bit)](https://www.python.org/ftp/python/3.10.2/python-3.10.2-amd64.exe)
-4. Download Windows Build Tools:
-- [Windows Build Tools](https://visualstudio.microsoft.com/thank-you-downloading-visual-studio/?sku=BuildTools)
-- And select `Desktop development with C++` (the first one normally), and install
-5. Download the source code of the latest release
-- [Releases](https://github.com/Zeldruck/Albion-Online-ZQRadar/releases)
-6. Run the following line:
-```
+```powershell
+git clone --branch old-radar-dev --single-branch https://github.com/Zeldruck/Albion-Online-ZQRadar.git C:\dev\zqradar
+Set-Location C:\dev\zqradar
 npm install
+npm start
 ```
-7. Run the following line:
-```
-node app.js
-```
-8. You should see this:
-```
-Please select one of the adapter that you use to connect to the internet:
-  1. ******
-  2. ******
-  3. ******
 
-input the number here:
+The first launch lists active IPv4 adapters and asks for a number. Pick the interface carrying the game connection. The default route interface is usually the right starting point; do not choose loopback (`127.0.0.1`). If traffic routes through a VPN, select that VPN interface instead. The selection is saved in ignored `ip.txt`; delete it to choose again.
+
+Open [http://localhost:5001](http://localhost:5001). The HTTP and WebSocket services bind to `127.0.0.1` only.
+
+Validate toolchain before installing packages with:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\scripts\check-env.ps1
 ```
-9. Choose the right adapter and enter the number. 
-10. You can now access the radar features by going to `http://localhost:5001` in your browser.
 
-## ✨ Image Packs
-**⚠️(This is not mandatory for the radar to work)⚠️**
-\
-You can download the Image Packs to enhance the radar.
-\
-\
-**Packs:**
-- **Ressource Pack v1.0**: Installed by default
-- **Items Pack v1.2**: [Link](https://github.com/Zeldruck/Albion-Online-ZQRadar/releases/tag/item-pack-v1.1)
-- **~~Animals & Harvestables Pack v0.0~~**: [Link](https://github.com/Zeldruck/Albion-Online-ZQRadar/releases/)
-- **~~Enemies Pack v0.0~~**: [Link](https://github.com/Zeldruck/Albion-Online-ZQRadar/releases/)
-- **Maps Pack v0.1**: [Link](https://github.com/Zeldruck/Albion-Online-ZQRadar/releases/tag/map-pack-v0.1)
+`requirements.txt` is intentionally empty apart from comments: the project has no Python packages; Python is present for node-gyp.
 
-\
-Once downloaded, exitract the folder into `Albion-Online-ZQRadar/images/`.
-\
-\
-Example:
-\
-If you have downloaded the Map Pack, you should have `Albion-Online-ZQRadar/images/Maps/*.png`.
+## Authentication and protocol status
 
+This source branch has no Discord OAuth/login implementation. The `/logout` route simply returns to the home page; there is no session middleware or auth configuration in this code. The README's Discord links are community links only.
+
+The capture filter remains UDP port 5056. The parser is the repository's local code in `scripts/classes/PhotonPacketParser.js`, `PhotonPacket.js`, `PhotonCommand.js`, and `Protocol16Deserializer.js`; the README's old credit to a separately installed `photon-packet-parser` package does not match this branch. Opcode/offset compatibility with the current game build has not been established. Do not treat old event IDs or offsets as verified. To update them, collect a packet capture from the current client/server session and compare decoded fields against the local parser's output before changing constants.
+
+## Build notes
+
+See [FIXES.md](FIXES.md) for the exact dependency and native-build changes. The existing `build` command uses `nexe`; a single-file executable is not yet validated because native `cap`/Npcap binding and runtime resource loading need packaging-specific work.
 
 ## Credits
-[@Zeldruck](https://github.com/Zeldruck)
-\
-Based on [QRadar](https://github.com/FashionFlora/Albion-Online-Radar-QRadar) by [@FashionFlora](https://github.com/FashionFlora?)
-\
-Use of [photon-packet-parser](https://github.com/0xN0x/photon-packet-parser) to parse packets.
+
+Original project by [Zeldruck](https://github.com/Zeldruck), based on [QRadar](https://github.com/FashionFlora/Albion-Online-Radar-QRadar).
