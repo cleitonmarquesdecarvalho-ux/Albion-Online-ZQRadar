@@ -53,3 +53,10 @@
 ## Source remote
 
 The local repository was cloned from the archived upstream branch because no personal fork URL was supplied. The remote is named `upstream`; set `origin` to the user's fork before pushing.
+
+## Player equipment icons
+
+- Added 2,782 local WebP item icons from the MIT-licensed OpenRadar asset pack. Attribution and the source commit are recorded in `images/Items/ASSET-SOURCE.md`; the license is included beside the assets.
+- Fixed the startup race: player equipment now receives the item-ID catalog after `items.txt` finishes loading.
+- Player gear drawing now uses local WebP assets and supports PNG assets for item IDs absent from the WebP pack. Two missing furniture icons were added from the Albion item renderer (`render.albiononline.com`).
+- This removes the blue missing-image circles for the shown equipment. Unmapped or newly added game items can still require updated `items.txt` mappings and an icon asset.

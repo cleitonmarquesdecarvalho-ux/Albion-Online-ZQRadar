@@ -42,7 +42,7 @@ const dungeonsHandler = new DungeonsHandler(settings);
 var itemsInfo = new ItemsInfo();
 var mobsInfo = new MobsInfo();
 
-itemsInfo.initItems();
+const itemsInfoPromise = itemsInfo.initItems();
 mobsInfo.initMobs();
 
 var map = new MapH(-1);
@@ -69,6 +69,9 @@ const dungeonsDrawing = new DungeonsDrawing(settings);
 const trackFootprintsHandler = new TrackFootprintsHandler(settings);
 const trackFootprintsDrawing = new TrackFootprintsDrawing(settings);
 playersDrawing.updateItemsInfo(itemsInfo.iteminfo);
+itemsInfoPromise
+    .then(() => playersDrawing.updateItemsInfo(itemsInfo.iteminfo))
+    .catch((error) => console.warn(`Não foi possível carregar o catálogo de itens: ${error.message}`));
 
 
 let lpX = 0.0;
