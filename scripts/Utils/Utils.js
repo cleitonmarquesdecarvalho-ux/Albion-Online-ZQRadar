@@ -361,7 +361,7 @@ function renderPlayerList() {
     if (players.length === 0) {
         const empty = document.createElement('div');
         empty.className = 'player-meta';
-        empty.textContent = 'Nenhum jogador detectado nesta zona.';
+        empty.textContent = 'Aguardando entradas de jogadores. Se o radar iniciou com você já nesta zona, troque de zona e volte para receber a lista inicial.';
         list.appendChild(empty);
         return;
     }
