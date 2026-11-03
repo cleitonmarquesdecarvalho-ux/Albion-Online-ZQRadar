@@ -442,11 +442,12 @@ setDrawingViews();
 
 function setDrawingViews() {
     // Move the equipment strip beside the map once; keep later user adjustments.
-    if (localStorage.getItem('drawingSideBySideV1') !== 'true') {
+    if (localStorage.getItem('drawingSideBySideV2') !== 'true') {
         localStorage.setItem('itemsWindowMarginX', '520');
         localStorage.setItem('itemsWindowMarginY', '0');
+        localStorage.setItem('itemsWidth', '420');
         localStorage.setItem('buttonMarginX', '1040');
-        localStorage.setItem('drawingSideBySideV1', 'true');
+        localStorage.setItem('drawingSideBySideV2', 'true');
     }
     const mainWindowMarginXValue = localStorage.getItem("mainWindowMarginX");
     const mainWindowMarginYValue = localStorage.getItem("mainWindowMarginY");
