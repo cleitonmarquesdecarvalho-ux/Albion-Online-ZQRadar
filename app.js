@@ -162,6 +162,15 @@ async function start() {
   logger.info(`Interface web disponível em http://${host}:${port}; adaptador ${adapterIp}`);
 
   const wsServer = new WebSocket.Server({ port: 5002, host });
+  const activePlayerEvents = new Map();
+  const sendSnapshot = (client) => {
+    const message = JSON.stringify({
+      code: 'players_snapshot',
+      dictionary: JSON.stringify(Array.from(activePlayerEvents.values()))
+    });
+    if (client.readyState === WebSocket.OPEN) client.send(message);
+  };
+  wsServer.on('connection', (client) => sendSnapshot(client));
   wsServer.on('error', (error) => {
     const message = error.code === 'EADDRINUSE'
       ? 'A porta 5002 do WebSocket já está ocupada. Feche o processo que a utiliza ou libere a porta.'
@@ -173,8 +182,25 @@ async function start() {
   });
   for (const eventName of ['event', 'request', 'response']) {
     manager.on(eventName, (dictionary) => {
+      const parameters = dictionary?.parameters;
+      if (eventName === 'event' && parameters) {
+        const eventCode = Number(parameters[252]);
+        const playerId = parameters[0];
+        if (eventCode === 29 && playerId !== undefined && playerId !== null) {
+          activePlayerEvents.delete(String(playerId));
+          activePlayerEvents.set(String(playerId), dictionary);
+          while (activePlayerEvents.size > 100) activePlayerEvents.delete(activePlayerEvents.keys().next().value);
+        } else if (eventCode === 1 && playerId !== undefined && playerId !== null) {
+          activePlayerEvents.delete(String(playerId));
+        }
+      } else if (eventName === 'response' && parameters && [2, 41].includes(Number(parameters[253]))) {
+        activePlayerEvents.clear();
+      }
       const message = JSON.stringify({ code: eventName, dictionary: JSON.stringify(dictionary) });
       wsServer.clients.forEach((client) => { if (client.readyState === WebSocket.OPEN) client.send(message); });
+      if (eventName === 'response' && parameters && [2, 41].includes(Number(parameters[253]))) {
+        wsServer.clients.forEach(sendSnapshot);
+      }
     });
   }
   logger.info('Captura Npcap e WebSocket local iniciados.');

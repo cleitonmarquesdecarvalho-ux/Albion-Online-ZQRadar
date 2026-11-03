@@ -67,5 +67,12 @@ The local repository was cloned from the archived upstream branch because no per
 - New hostile-player detections produce a temporary visible alert. The existing Players -> Sound option now plays the bundled `sounds/player.mp3` for a newly detected hostile.
 - Exact player dots and distance are still unavailable from this passive capture path; this change does not estimate coordinates.
 
+## Player list on page reconnect
+
+- The backend now keeps up to 100 recent `NewCharacter` (event 29) payloads and replays them to newly connected Drawing pages, so opening/reloading the page no longer loses players whose spawn event arrived earlier in the running session.
+- `Leave` (event 1) removes that player from the snapshot. Observed map/join responses 41 and 2 clear the cache to avoid replaying a previous zone's players.
+- The cache starts empty when `app.js` restarts and can only contain players whose `NewCharacter` event was captured during that server session. Players already present before startup cannot be reconstructed until the client receives their spawn event.
+- Snapshot replay uses the same player parser and ignore-list filters, while suppressing duplicate hostile alerts.
+
 - Replaced the stale player item-ID catalog with the current catalog from OpenRadar's MIT-licensed item data at commit `2786827386ee31d37d5a6068b965f42d589fe946`; the old mapping mislabeled live IDs after game updates.
 - Equipment icons now retain their 10-slot positions, so empty offhand/bag/cape/etc. slots no longer shift the following item icons.

@@ -101,6 +101,14 @@ socket.addEventListener('message', (event) => {
 
   var extractedDictionary = JSON.parse(data.dictionary);
 
+  if (extractedString === "players_snapshot") {
+    playersHandler.clear();
+    for (const playerEvent of extractedDictionary) {
+      if (playerEvent?.parameters) onEvent(playerEvent.parameters, true);
+    }
+    return;
+  }
+
   switch (extractedString)
   {
     case "request":
@@ -118,7 +126,7 @@ socket.addEventListener('message', (event) => {
 });
 
 
-function onEvent(Parameters)
+function onEvent(Parameters, suppressAlerts = false)
 {
     const id = parseInt(Parameters[0]);
     const eventCode = Parameters[252];
@@ -152,7 +160,7 @@ function onEvent(Parameters)
 
         case EventCodes.NewPlayer:
             const detection = playersHandler.handleNewPlayerEvent(Parameters);
-            if (detection?.isNew && detection.player.faction === 255) {
+            if (!suppressAlerts && detection?.isNew && detection.player.faction === 255) {
                 playerAlert = { nickname: detection.player.nickname, expiresAt: Date.now() + 7000 };
                 if (settings.settingSound) {
                     const alertAudio = new Audio('/sounds/player.mp3');
